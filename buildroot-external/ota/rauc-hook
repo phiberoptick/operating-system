@@ -9,13 +9,13 @@ case "$1" in
              exit 0
          fi
          # Be compatible with hassos OS ID
-         # shellcheck disable=SC2039
+         # shellcheck disable=SC3060
          rauc_os_compatible=${RAUC_MF_COMPATIBLE/haos-/hassos-}
          if [ "$rauc_os_compatible" = "$RAUC_SYSTEM_COMPATIBLE" ]; then
              exit 0
          fi
          # generic-x86-64: Be compatible with intel-nuc
-         # shellcheck disable=SC2039
+         # shellcheck disable=SC3060
          rauc_board_compatible=${rauc_os_compatible/generic-x86-64/intel-nuc}
          if [ "${rauc_board_compatible}" = "$RAUC_SYSTEM_COMPATIBLE" ]; then
              exit 0
@@ -63,12 +63,14 @@ fi
 if [ "${RAUC_SLOT_CLASS}" = "spl" ]; then
     DEVICE_CHILD="$(findfs LABEL="hassos-boot")"
     DEVICE_ROOT="/dev/$(lsblk -no pkname "${DEVICE_CHILD}")"
+    PART_TABLE="$(sfdisk -lqJ "${DEVICE_ROOT}")"
+    PART_LABEL="$(echo "${PART_TABLE}" | jq -r '.partitiontable.label')"
 
-    if sfdisk -dq "${DEVICE_ROOT}" | grep -q 'label: gpt'; then
-        dd if="${RAUC_IMAGE_NAME}" of="${DEVICE_ROOT}" conv=notrunc bs=512 seek=2 skip=2
+    if [ "${PART_LABEL}" = "gpt" ]; then
+        dd if="${RAUC_IMAGE_NAME}" of="${DEVICE_ROOT}" conv=notrunc oflag=direct bs=512 seek=2 skip=2
     else
-        dd if="${RAUC_IMAGE_NAME}" of="${DEVICE_ROOT}" conv=notrunc bs=1 count=440
-        dd if="${RAUC_IMAGE_NAME}" of="${DEVICE_ROOT}" conv=notrunc bs=512 seek=1 skip=1
+        dd if="${RAUC_IMAGE_NAME}" of="${DEVICE_ROOT}" conv=notrunc oflag=direct bs=1 count=440
+        dd if="${RAUC_IMAGE_NAME}" of="${DEVICE_ROOT}" conv=notrunc oflag=direct bs=512 seek=1 skip=1
     fi
 fi
 

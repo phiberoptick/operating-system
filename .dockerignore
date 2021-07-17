@@ -3,5 +3,10 @@ buildroot/
 buildroot-external/
 buildroot-patches/
 
-# Ignore too
+# Output/Release directory gets created using build scripts
+output*/
 release/
+
+# Ignore hidden directories as well
+.git/
+.github/

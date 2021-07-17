@@ -89,14 +89,7 @@ function create_kernel_image() {
 
     # Make image
     rm -f "${kernel_img}"
-    truncate --size="${KERNEL_SIZE}" "${kernel_img}"
-    mkfs.ext4 -L "hassos-kernel" -E lazy_itable_init=0,lazy_journal_init=0 -O ^extent,^64bit "${kernel_img}"
-
-    # Mount / init file structs
-    sudo mkdir -p /mnt/data/
-    sudo mount -o loop "${kernel_img}" /mnt/data
-    sudo cp "${kernel}" /mnt/data/
-    sudo umount /mnt/data
+    mksquashfs "${kernel}" "${kernel_img}" -comp lzo
 }
 
 
@@ -331,5 +324,5 @@ function convert_disk_image_zip() {
     local hdd_img="$(hassos_image_name "${hdd_ext}")"
 
     rm -f "${hdd_img}.zip"
-    zip -r "${hdd_img}.zip" "${hdd_img}"
+    zip -j -m -q -r "${hdd_img}.zip" "${hdd_img}"
 }
